@@ -6,19 +6,19 @@ import (
 	"testing"
 )
 
-func TestGetIDS(t *testing.T) {
+func TestGetIDs(t *testing.T) {
 	// Testing data
 	in := types.InputData{Latitude: 40.7128, Longitude: -74.0060}
 	merchants := []types.MerchantInfo{
-		{ID: "1", Latitude: 40.71, Longitude: -74.01, AvailabilityRadius: 5.0},
-		{ID: "2", Latitude: 60.72, Longitude: -84.02, AvailabilityRadius: 3.0}, // out of availability radius
-		{ID: "3", Latitude: 40.72, Longitude: -74.02, AvailabilityRadius: 3.0},
+		{ID: "1", Latitude: 40.71, Longitude: -74.01, AvailabilityRadius: 5.0, OpenHour: time.Now(), CloseHour: time.Now().Add(1 * time.Hour)},
+		{ID: "2", Latitude: 60.72, Longitude: -84.02, AvailabilityRadius: 3.0, OpenHour: time.Now(), CloseHour: time.Now().Add(1 * time.Hour)},
+		{ID: "3", Latitude: 40.71, Longitude: -74.02, AvailabilityRadius: 5.0, OpenHour: time.Now(), CloseHour: time.Now().Add(1 * time.Hour)},
 	}
 
 	output, err := GetIDS(in, merchants)
 
 	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
+		t.Errorf("Error in GetIDs: %v", err)
 	}
 
 	expectedOutput := types.Output{IDs: []string{"1", "3"}}
