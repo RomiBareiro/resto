@@ -23,7 +23,7 @@ The API should provide the following functionality:
 - Receive a request with the user's location.
 - Determine which restaurants can deliver orders to the user at the time of the query.
 - Return a list of restaurant IDs that meet the delivery criteria:
-  * Restaurant is open and its closing time is > to 10 min from current time)
+  * Restaurant is open and its closing time is > to 10 min from current time
   * Restaurant availability radius < 5km
 
 ## Usage
