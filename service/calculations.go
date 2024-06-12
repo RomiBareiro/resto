@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"math"
+	"time"
 )
 
 // canDeliverHere returns if it is deliverable (TRUE or FALSE)
@@ -29,4 +30,15 @@ func canDeliverHere(deliveryLat, deliveryLon, customerLat, customerLon, availabi
 // toRadians convert degrees to radians
 func toRadians(degrees float64) float64 {
 	return degrees * math.Pi / 180
+}
+
+func isMerchantOpen(openTime, closeTime time.Time) bool {
+	currentTime := time.Now()
+
+	if currentTime.After(openTime) && currentTime.Before(closeTime) {
+		// faltan mas de 10 min para cerrar y esta abierto
+		timeUntilClosing := closeTime.Sub(currentTime)
+		return timeUntilClosing > 10*time.Minute
+	}
+	return false
 }

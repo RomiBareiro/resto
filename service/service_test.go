@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"resto_go/types"
 	"testing"
+	"time"
 )
 
 func TestGetIDS(t *testing.T) {
@@ -24,5 +25,48 @@ func TestGetIDS(t *testing.T) {
 	expectedOutput := types.Output{IDs: []string{"1", "3"}}
 	if !reflect.DeepEqual(output, expectedOutput) {
 		t.Errorf("Unexpected output. Expected: %v, got: %v", expectedOutput, output)
+	}
+}
+
+func TestIsMerchantOpen(t *testing.T) {
+	tests := []struct {
+		name      string
+		openTime  time.Time
+		closeTime time.Time
+		expected  bool
+	}{
+		{
+			name:      "Open but closing soon",
+			openTime:  time.Now().Add(-2 * time.Hour),
+			closeTime: time.Now().Add(10 * time.Minute),
+			expected:  false,
+		},
+		{
+			name:      "Open and not closing soon",
+			openTime:  time.Now().Add(-2 * time.Hour),
+			closeTime: time.Now().Add(2 * time.Hour),
+			expected:  true,
+		},
+		{
+			name:      "Not open yet",
+			openTime:  time.Now().Add(1 * time.Hour),
+			closeTime: time.Now().Add(3 * time.Hour),
+			expected:  false,
+		},
+		{
+			name:      "Already closed",
+			openTime:  time.Now().Add(-3 * time.Hour),
+			closeTime: time.Now().Add(-2 * time.Hour),
+			expected:  false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := isMerchantOpen(test.openTime, test.closeTime)
+			if result != test.expected {
+				t.Errorf("Expected %v but got %v for test case: %s", test.expected, result, test.name)
+			}
+		})
 	}
 }

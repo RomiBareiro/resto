@@ -13,7 +13,9 @@ func GetIDS(in types.InputData, merchants []types.MerchantInfo) (types.Output, e
 	var Ids []string
 	for _, merchant := range merchants {
 		if canDeliverHere(in.Latitude, in.Longitude, merchant.Latitude, merchant.Longitude, merchant.AvailabilityRadius) {
-			Ids = append(Ids, merchant.ID)
+			if isMerchantOpen(merchant.OpenHour, merchant.CloseHour) {
+				Ids = append(Ids, merchant.ID)
+			}
 		}
 	}
 
