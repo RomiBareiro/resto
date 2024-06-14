@@ -20,5 +20,5 @@ type InputData struct {
 }
 
 type Output struct {
-	IDs []string `json:"ids"`
+	IDs []string `json:"ids,omitempty"`
 }
