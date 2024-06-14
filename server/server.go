@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -9,18 +10,23 @@ import (
 	"resto_go/types"
 	u "resto_go/utils"
 
+	"github.com/jackc/pgx/v4/pgxpool"
 	"go.uber.org/zap"
 )
 
 type Server struct {
 	logger *zap.Logger
-	svc    service.Service
+	Svc    service.Service
+	ctx    context.Context
+	pool   *pgxpool.Pool
 }
 
-func NewServer(logger *zap.Logger, svc service.Service) *Server {
+func NewServer(logger *zap.Logger, svc service.Service, pool *pgxpool.Pool) *Server {
 	return &Server{
 		logger: logger,
-		svc:    svc,
+		Svc:    svc,
+		pool:   pool,
+		ctx:    context.Background(),
 	}
 }
 
@@ -35,12 +41,12 @@ func (s *Server) GetIDsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	go func() {
-		info, err := u.ReadFile("template/csv_info.csv")
+		info, err := u.GetMerchants(s.ctx, s.pool)
 		if err != nil {
 			errChan <- err
 			return
 		}
-		ids, err := s.svc.GetIDS(in, info)
+		ids, err := s.Svc.GetIDS(in, info)
 		if err != nil {
 			errChan <- err
 			return
@@ -69,4 +75,18 @@ func ValidateInputData(body io.Reader) (types.InputData, error) {
 	}
 
 	return in, nil
+}
+
+// ProcessFile loads file data into our db
+func (s *Server) ProcessFile(filepath string, DB *pgxpool.Pool) error {
+	data, err := u.ReadFile(filepath)
+	if err != nil {
+		s.logger.Sugar().Errorf("could not read file: %s", filepath)
+		return err
+	}
+	if err := u.UpsertMerchants(s.ctx, DB, data); err != nil {
+		return err
+	}
+	s.logger.Sugar().Infof("UpsertMerchants ok")
+	return nil
 }

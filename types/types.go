@@ -1,17 +1,17 @@
 package types
 
-import (
-	"time"
-)
+import "time"
 
 type MerchantInfo struct {
-	ID                 string    `csv:"id"`
-	Latitude           float64   `csv:"latitude"`
-	Longitude          float64   `csv:"longitude"`
-	AvailabilityRadius float64   `csv:"availability_radius"`
-	OpenHour           time.Time `csv:"open_hour" format:"2006-01-02T15:04:05Z"`
-	CloseHour          time.Time `csv:"close_hour" format:"2006-01-02T15:04:05Z"`
-	Rating             int       `csv:"rating"`
+	ID                 string  `csv:"id" db:"id"`
+	Latitude           float64 `csv:"latitude" db:"latitude"`
+	Longitude          float64 `csv:"longitude" db:"longitude"`
+	AvailabilityRadius float64 `csv:"availability_radius" db:"availability_radius"`
+	OpenHour           string  `csv:"open_hour" db:"open_hour"`
+	CloseHour          string  `csv:"close_hour" db:"close_hour"`
+	Rating             int     `csv:"rating" db:"rating"`
+	OpenTime           time.Time
+	CloseTime          time.Time
 }
 
 type InputData struct {
