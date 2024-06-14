@@ -6,3 +6,5 @@ services:
     ports:
       - "8080:8080"
     command: ["/resto_go"]
+    environment:
+      DATABASE_URL: "postgres://romi:romi@db:5432/postgres"  # Cambiado de localhost a db
