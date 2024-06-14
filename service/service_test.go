@@ -45,10 +45,16 @@ func TestIsMerchantOpen(t *testing.T) {
 		expected  bool
 	}{
 		{
-			name:      "Open but closing soon",
+			name:      "Closing soon (less than 10 minutes)",
 			openTime:  time.Now().Add(-2 * time.Hour),
-			closeTime: time.Now().Add(10 * time.Minute),
+			closeTime: time.Now().Add(9 * time.Minute),
 			expected:  false,
+		},
+		{
+			name:      "Open with more than 10 minutes until closing",
+			openTime:  time.Now().Add(-2 * time.Hour),
+			closeTime: time.Now().Add(2 * time.Hour),
+			expected:  true,
 		},
 		{
 			name:      "Open and not closing soon",
