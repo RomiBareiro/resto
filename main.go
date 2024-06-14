@@ -16,14 +16,20 @@ func main() {
 	logger, _ := zap.NewProduction()
 	defer logger.Sync()
 
-	if err := setup(logger); err != nil {
-		logger.Sugar().Errorf("could not get input params: %v", err)
-		return
-	}
+	svc := setup(logger)
+
+	http.HandleFunc("/getIDs", func(w http.ResponseWriter, r *http.Request) {
+		getIDsHandler(w, r, svc)
+	})
+
+	// start server
+	port := ":8080"
+	logger.Sugar().Infof("Listening port:", port)
+	logger.Sugar().Fatal(http.ListenAndServe(port, nil))
 
 }
 
-func getIDsHandler(w http.ResponseWriter, r *http.Request) {
+func getIDsHandler(w http.ResponseWriter, r *http.Request, svc service.Service) {
 	idsChan := make(chan types.Output)
 	errChan := make(chan error)
 
@@ -39,7 +45,7 @@ func getIDsHandler(w http.ResponseWriter, r *http.Request) {
 			errChan <- err
 			return
 		}
-		ids, err := service.GetIDS(in, info)
+		ids, err := svc.GetIDS(in, info)
 		if err != nil {
 			errChan <- err
 			return

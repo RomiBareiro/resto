@@ -5,9 +5,15 @@ import (
 	"resto_go/types"
 	"testing"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 func TestGetIDs(t *testing.T) {
+	logger, _ := zap.NewProduction()
+	defer logger.Sync()
+	svc := NewService(logger)
+
 	// Testing data
 	in := types.InputData{Latitude: 40.7128, Longitude: -74.0060}
 	merchants := []types.MerchantInfo{
@@ -16,7 +22,7 @@ func TestGetIDs(t *testing.T) {
 		{ID: "3", Latitude: 40.71, Longitude: -74.02, AvailabilityRadius: 5.0, OpenHour: time.Now(), CloseHour: time.Now().Add(1 * time.Hour)},
 	}
 
-	output, err := GetIDS(in, merchants)
+	output, err := svc.GetIDS(in, merchants)
 
 	if err != nil {
 		t.Errorf("Error in GetIDs: %v", err)
@@ -29,6 +35,9 @@ func TestGetIDs(t *testing.T) {
 }
 
 func TestIsMerchantOpen(t *testing.T) {
+	logger, _ := zap.NewProduction()
+	defer logger.Sync()
+	svc := NewService(logger)
 	tests := []struct {
 		name      string
 		openTime  time.Time
@@ -63,7 +72,7 @@ func TestIsMerchantOpen(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result := isMerchantOpen(test.openTime, test.closeTime)
+			result := svc.IsMerchantOpen(test.openTime, test.closeTime)
 			if result != test.expected {
 				t.Errorf("Expected %v but got %v for test case: %s", test.expected, result, test.name)
 			}
