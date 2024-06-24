@@ -7,15 +7,17 @@ We need to build an API that can handle real-time queries based on user location
 ## Data Format
 Restaurant information is available in a CSV file with the following columns: (In this example csv is in template folder)
 
-```code
-id: Restaurant ID
-latitude: Latitude of the restaurant's location
-longitude: Longitude of the restaurant's location
-availability_radius: Delivery radius in kilometers
-open_hour: Start time of delivery hours in ISO format
-close_hour: End time of delivery hours in ISO format
-rating: Restaurant rating, a number between 1 and 5
-```
+| Field  | Meaning  |
+| ------------ | ------------ |
+|  id |  Restaurant ID |
+|  latitude |Latitude of the restaurant's location   |
+|longitude   | Longitude of the restaurant's location  |
+|  availability_radius |   Delivery radius in kilometers|
+|  close_hour |  End time of delivery hours in ISO format |
+|  open_hour | Start time of delivery hours in ISO format  |
+|  rating | Restaurant rating, a number between 1 and 5 |
+
+Every 6 hs, we download this csv file and update a table with merchant information to query our requests
 
 ## API Development
 The API should provide the following functionality:
