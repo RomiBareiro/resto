@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"resto_go/service"
 	"resto_go/types"
 	u "resto_go/utils"
+	"strconv"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	"go.uber.org/zap"
@@ -22,6 +22,12 @@ type Server struct {
 	pool   *pgxpool.Pool
 }
 
+var (
+	errInvalidParams      = errors.New("latitude & longitude must be valid numbers")
+	errMissingFields      = errors.New("latitude & longitude are required, non-zero and valid")
+	errServiceUnavailable = errors.New("service unavailable")
+)
+
 func NewServer(logger *zap.Logger, svc service.Service, pool *pgxpool.Pool) *Server {
 	return &Server{
 		logger: logger,
@@ -32,12 +38,30 @@ func NewServer(logger *zap.Logger, svc service.Service, pool *pgxpool.Pool) *Ser
 }
 
 func (s *Server) GetIDsHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(types.ErrorResponse{Error: "method_not_allowed", Cause: "only GET is allowed"})
+		return
+	}
+
 	idsChan := make(chan types.Output)
 	errChan := make(chan error)
 
-	in, err := ValidateInputData(r.Body)
+	latStr := r.URL.Query().Get("latitude")
+	lonStr := r.URL.Query().Get("longitude")
+
+	in, err := ValidateInputData(latStr, lonStr)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
+		status := http.StatusUnprocessableEntity
+		errorCode := "unprocessable_entity"
+		if errors.Is(err, errInvalidParams) {
+			status = http.StatusBadRequest
+			errorCode = "bad_request"
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(status)
+		json.NewEncoder(w).Encode(types.ErrorResponse{Error: errorCode, Cause: err.Error()})
 		return
 	}
 
@@ -45,8 +69,9 @@ func (s *Server) GetIDsHandler(w http.ResponseWriter, r *http.Request) {
 		info, err := u.GetMerchants(s.ctx, s.pool)
 		if err != nil {
 			if err.Error() == "no merchants found" {
-				if err := s.ProcessFile("template/csv_info.csv", s.pool); err != nil {
-					errChan <- fmt.Errorf("error processing file: %v", err)
+				if procErr := s.ProcessFile("template/csv_info.csv", s.pool); procErr != nil {
+					errChan <- fmt.Errorf("%w: %v", errServiceUnavailable, procErr)
+					return
 				}
 			}
 			errChan <- err
@@ -73,7 +98,9 @@ func (s *Server) GetIDsHandler(w http.ResponseWriter, r *http.Request) {
 		if err.Error() == "no available merchants" {
 			status = http.StatusNotFound
 			cause = "not_found"
-
+		} else if errors.Is(err, errServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			cause = "service_unavailable"
 		} else {
 			status = http.StatusInternalServerError
 			cause = "internal_server_error"
@@ -83,18 +110,26 @@ func (s *Server) GetIDsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func ValidateInputData(body io.Reader) (types.InputData, error) {
-	var in types.InputData
-	err := json.NewDecoder(body).Decode(&in)
+func ValidateInputData(latStr, lonStr string) (types.InputData, error) {
+	if latStr == "" || lonStr == "" {
+		return types.InputData{}, errMissingFields
+	}
+
+	lat, err := strconv.ParseFloat(latStr, 64)
 	if err != nil {
-		return types.InputData{}, errors.New("invalid JSON format")
+		return types.InputData{}, errInvalidParams
 	}
 
-	if in.Latitude == 0 || in.Longitude == 0 {
-		return types.InputData{}, errors.New("latitude & longitude are required and must be non-zero")
+	lon, err := strconv.ParseFloat(lonStr, 64)
+	if err != nil {
+		return types.InputData{}, errInvalidParams
 	}
 
-	return in, nil
+	if lat == 0 || lon == 0 {
+		return types.InputData{}, errMissingFields
+	}
+
+	return types.InputData{Latitude: lat, Longitude: lon}, nil
 }
 
 // ProcessFile loads file data into our db

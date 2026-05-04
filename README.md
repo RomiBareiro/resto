@@ -29,19 +29,25 @@ The API should provide the following functionality:
   * Restaurant availability radius < 5km
 
 ## Usage
+Retrieves available merchant/restaurant IDs from the Jampp platform based on geographic coordinates. This is useful for discovering nearby merchants or restaurants at a given location.
+
+**Base URL:** Uses the `{{local_url}}` environment variable — make sure it is set in your active environment before sending the request.
+
+**Request Body (raw JSON)**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `latitude` | number | Latitude of the target location (e.g., `40.7128` for New York City) |
+| `longitude` | number | Longitude of the target location (e.g., `-74.0060` for New York City) |
+
+**Notes**
+- If no merchants are available at the specified coordinates, the API returns a `404` response with `{ "error": "not_found", "cause": "no available merchants" }`.
+- Ensure the coordinates are valid and within a supported region to get results.
 
 ### Start server
 
 ```code
 sudo docker-compose up --build
-```
-
-### Send request: 
-```code
-{
-    "latitude": 40.7128, //user location
-    "longitude" : -74.0060
-}
 ```
 
 ### Example response:
@@ -53,6 +59,7 @@ sudo docker-compose up --build
     ]
 }
 ```
+
 ### Stop server
 ```code
 sudo docker-compose down

@@ -1,0 +1,99 @@
+openapi: 3.0.3
+info:
+  title: Resto API
+  version: 1.0.0
+  description: Obtiene IDs de merchants disponibles para una ubicación.
+
+paths:
+  /getIDs:
+    get:
+      summary: Obtener IDs de merchants disponibles
+      description: Devuelve los merchants que pueden entregar en la ubicación enviada.
+      parameters:
+        - in: query
+          name: latitude
+          required: true
+          schema:
+            type: number
+            example: 40.7128
+        - in: query
+          name: longitude
+          required: true
+          schema:
+            type: number
+            example: -74.0060
+      responses:
+        '200':
+          description: IDs encontrados
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Output'
+        '400':
+          description: JSON inválido o parámetros faltantes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: No hay merchants disponibles para la ubicación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Input válido pero no procesable (datos faltantes/no numéricos)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '405':
+          description: Método no permitido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Servicio no disponible
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    InputData:
+      type: object
+      properties:
+        latitude:
+          type: number
+          example: 40.7128
+        longitude:
+          type: number
+          example: -74.0060
+      required:
+        - latitude
+        - longitude
+    Output:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: string
+          example: ["1","3"]
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: internal_server_error
+        cause:
+          type: string
+          example: latitude & longitude are required and must be non-zero
