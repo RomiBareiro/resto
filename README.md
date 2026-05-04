@@ -33,8 +33,7 @@ The API should provide the following functionality:
 ### Start server
 
 ```code
-sudo docker-compose build 
-sudo docker-compose up
+sudo docker-compose up --build
 ```
 
 ### Send request: 
@@ -53,4 +52,8 @@ sudo docker-compose up
         "312"
     ]
 }
+```
+### Stop server
+```code
+sudo docker-compose down
 ```
