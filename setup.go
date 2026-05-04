@@ -2,21 +2,38 @@ package main
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
+	"os"
 	"resto_go/server"
 	"resto_go/service"
 
+	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"go.uber.org/zap"
 )
 
+const appDBName = "romi"
+
 func serviceSetup(logger *zap.Logger) *service.Service {
-	connStr := "postgresql://romi:romi@172.18.0.1:5432/postgres?sslmode=disable"
+	connStr := os.Getenv("DATABASE_URL")
+	if connStr == "" {
+		connStr = "postgresql://romi:romi@db:5432/postgres?sslmode=disable"
+	}
+
+	ctx := context.Background()
+	if err := ensureDatabaseExists(ctx, connStr, appDBName); err != nil {
+		logger.Fatal("Error ensuring database exists", zap.Error(err))
+	}
+
 	config, err := pgxpool.ParseConfig(connStr)
 	if err != nil {
 		logger.Fatal("Error parsing config", zap.Error(err))
 	}
-	ctx := context.Background()
+	config.ConnConfig.Database = appDBName
+
 	pool, err := pgxpool.ConnectConfig(ctx, config)
 	if err != nil {
 		logger.Fatal("Error connecting to database", zap.Error(err))
@@ -24,6 +41,30 @@ func serviceSetup(logger *zap.Logger) *service.Service {
 
 	svc := service.NewService(logger, pool)
 	return &svc
+}
+
+func ensureDatabaseExists(ctx context.Context, connStr, dbName string) error {
+	config, err := pgxpool.ParseConfig(connStr)
+	if err != nil {
+		return err
+	}
+	config.ConnConfig.Database = "postgres"
+
+	pool, err := pgxpool.ConnectConfig(ctx, config)
+	if err != nil {
+		return err
+	}
+	defer pool.Close()
+
+	_, err = pool.Exec(ctx, fmt.Sprintf("CREATE DATABASE %s", pgx.Identifier{dbName}.Sanitize()))
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "42P04" {
+			return nil
+		}
+		return err
+	}
+	return nil
 }
 
 func serverSetup(log *zap.Logger, svc service.Service) *server.Server {
