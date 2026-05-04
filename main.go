@@ -36,7 +36,6 @@ func main() {
 			logger.Sugar().Errorf("Error processing file: %v\n", err)
 		}
 	}
-	defer pool.Close()
 }
 
 func downloadFile(url string, filepath string) error {

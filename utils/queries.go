@@ -42,7 +42,7 @@ func UpsertMerchants(ctx context.Context, db *pgxpool.Pool, merchants []t.Mercha
 func GetMerchants(ctx context.Context, db *pgxpool.Pool) ([]t.MerchantInfo, error) {
 	var merchants []t.MerchantInfo
 
-	rows, err := db.Query(ctx, "SELECT * FROM restaurante.merchants")
+	rows, err := db.Query(ctx, "SELECT id, latitude, longitude, availability_radius, open_hour, close_hour, rating FROM restaurante.merchants")
 	if err != nil {
 		return nil, err
 	}
@@ -61,6 +61,9 @@ func GetMerchants(ctx context.Context, db *pgxpool.Pool) ([]t.MerchantInfo, erro
 		return nil, err
 	}
 
+	if len(merchants) == 0 {
+		return nil, fmt.Errorf("no merchants found")
+	}
 	return merchants, nil
 }
 

@@ -20,7 +20,7 @@ const appDBName = "romi"
 func serviceSetup(logger *zap.Logger) *service.Service {
 	connStr := os.Getenv("DATABASE_URL")
 	if connStr == "" {
-		connStr = "postgresql://romi:romi@db:5432/postgres?sslmode=disable"
+		connStr = "postgresql://romi:romi@db:5432/romi?sslmode=disable"
 	}
 
 	ctx := context.Background()
@@ -32,7 +32,6 @@ func serviceSetup(logger *zap.Logger) *service.Service {
 	if err != nil {
 		logger.Fatal("Error parsing config", zap.Error(err))
 	}
-	config.ConnConfig.Database = appDBName
 
 	pool, err := pgxpool.ConnectConfig(ctx, config)
 	if err != nil {

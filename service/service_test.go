@@ -17,9 +17,9 @@ func TestGetIDs(t *testing.T) {
 	// Testing data
 	in := types.InputData{Latitude: 40.7128, Longitude: -74.0060}
 	merchants := []types.MerchantInfo{
-		{ID: "1", Latitude: 40.71, Longitude: -74.01, AvailabilityRadius: 5.0, OpenTime: time.Now(), CloseTime: time.Now().Add(1 * time.Hour)},
-		{ID: "2", Latitude: 60.72, Longitude: -84.02, AvailabilityRadius: 3.0, OpenTime: time.Now(), CloseTime: time.Now().Add(1 * time.Hour)},
-		{ID: "3", Latitude: 40.71, Longitude: -74.02, AvailabilityRadius: 5.0, OpenTime: time.Now(), CloseTime: time.Now().Add(1 * time.Hour)},
+		{ID: "1", Latitude: "40.71", Longitude: "-74.01", AvailabilityRadius: "5.0", OpenTime: time.Now(), CloseTime: time.Now().Add(1 * time.Hour)},
+		{ID: "2", Latitude: "60.72", Longitude: "-84.02", AvailabilityRadius: "3.0", OpenTime: time.Now(), CloseTime: time.Now().Add(1 * time.Hour)},
+		{ID: "3", Latitude: "40.71", Longitude: "-74.02", AvailabilityRadius: "5.0", OpenTime: time.Now(), CloseTime: time.Now().Add(1 * time.Hour)},
 	}
 
 	output, err := svc.GetIDS(in, merchants)
@@ -29,8 +29,8 @@ func TestGetIDs(t *testing.T) {
 	}
 
 	expectedOutput := types.Output{IDs: []string{"1", "3"}}
-	if !reflect.DeepEqual(output, expectedOutput) {
-		t.Errorf("Unexpected output. Expected: %v, got: %v", expectedOutput, output)
+	if !reflect.DeepEqual(output, &expectedOutput) {
+		t.Errorf("Unexpected output. Expected: %v, got: %v", expectedOutput, *output)
 	}
 }
 

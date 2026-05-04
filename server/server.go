@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"resto_go/service"
@@ -43,6 +44,11 @@ func (s *Server) GetIDsHandler(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		info, err := u.GetMerchants(s.ctx, s.pool)
 		if err != nil {
+			if err.Error() == "no merchants found" {
+				if err := s.ProcessFile("template/csv_info.csv", s.pool); err != nil {
+					errChan <- fmt.Errorf("error processing file: %v", err)
+				}
+			}
 			errChan <- err
 			return
 		}
@@ -51,15 +57,29 @@ func (s *Server) GetIDsHandler(w http.ResponseWriter, r *http.Request) {
 			errChan <- err
 			return
 		}
-		idsChan <- ids
+		idsChan <- *ids
 	}()
 
+	w.Header().Set("Content-Type", "application/json")
 	select {
 	case ids := <-idsChan:
-		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(ids)
 	case err := <-errChan:
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		var (
+			status int
+			cause  string
+		)
+		if err.Error() == "no available merchants" {
+			status = http.StatusNotFound
+			cause = "not_found"
+
+		} else {
+			status = http.StatusInternalServerError
+			cause = "internal_server_error"
+		}
+		w.WriteHeader(status)
+		json.NewEncoder(w).Encode(types.ErrorResponse{Cause: err.Error(), Error: cause})
 	}
 }
 

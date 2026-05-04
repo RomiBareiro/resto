@@ -11,7 +11,7 @@ import (
 
 // Service define la interfaz para nuestro servicio
 type Service interface {
-	GetIDS(in t.InputData, merchants []t.MerchantInfo) (t.Output, error)
+	GetIDS(in t.InputData, merchants []t.MerchantInfo) (*t.Output, error)
 	IsMerchantOpen(openTime, closeTime time.Time) bool
 	Pool() *pgxpool.Pool
 }
@@ -29,18 +29,20 @@ func (s *service) Pool() *pgxpool.Pool {
 }
 
 // GetIDS returns merchant IDS that are available for the delivery
-func (s *service) GetIDS(in t.InputData, merchants []t.MerchantInfo) (t.Output, error) {
+func (s *service) GetIDS(in t.InputData, merchants []t.MerchantInfo) (*t.Output, error) {
 	if len(merchants) == 0 {
-		return t.Output{}, fmt.Errorf("no available merchants")
+		return nil, fmt.Errorf("no available merchants")
 	}
 	var Ids []string
 	for _, merchant := range merchants {
-		if s.canDeliverHere(in.Latitude, in.Longitude, merchant.Latitude, merchant.Longitude, merchant.AvailabilityRadius) {
+		if s.canDeliverHere(in, merchant) {
 			if s.IsMerchantOpen(merchant.OpenTime, merchant.CloseTime) {
 				Ids = append(Ids, merchant.ID)
 			}
 		}
 	}
-
-	return t.Output{IDs: Ids}, nil
+	if len(Ids) == 0 {
+		return nil, fmt.Errorf("no available merchants")
+	}
+	return &t.Output{IDs: Ids}, nil
 }
