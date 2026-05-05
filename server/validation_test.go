@@ -12,7 +12,7 @@ import (
 func TestValidateInputData(t *testing.T) {
 	validInput, err := ValidateInputData("40.7128", "-74.0060")
 	assert.NoError(t, err, "No error")
-	expectedValidInput := types.InputData{Latitude: 40.7128, Longitude: -74.0060}
+	expectedValidInput := &types.InputData{Latitude: 40.7128, Longitude: -74.0060}
 	assert.Equal(t, expectedValidInput, validInput, "TEST ok")
 
 	_, err = ValidateInputData("invalid", "-74.0060")

@@ -77,7 +77,7 @@ func (s *Server) GetIDsHandler(w http.ResponseWriter, r *http.Request) {
 			errChan <- err
 			return
 		}
-		ids, err := s.Svc.GetIDS(in, info)
+		ids, err := s.Svc.GetIDS(*in, info)
 		if err != nil {
 			errChan <- err
 			return
@@ -110,26 +110,26 @@ func (s *Server) GetIDsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func ValidateInputData(latStr, lonStr string) (types.InputData, error) {
+func ValidateInputData(latStr, lonStr string) (*types.InputData, error) {
 	if latStr == "" || lonStr == "" {
-		return types.InputData{}, errMissingFields
+		return nil, errMissingFields
 	}
 
 	lat, err := strconv.ParseFloat(latStr, 64)
 	if err != nil {
-		return types.InputData{}, errInvalidParams
+		return nil, errInvalidParams
 	}
 
 	lon, err := strconv.ParseFloat(lonStr, 64)
 	if err != nil {
-		return types.InputData{}, errInvalidParams
+		return nil, errInvalidParams
 	}
 
 	if lat == 0 || lon == 0 {
-		return types.InputData{}, errMissingFields
+		return nil, errMissingFields
 	}
 
-	return types.InputData{Latitude: lat, Longitude: lon}, nil
+	return &types.InputData{Latitude: lat, Longitude: lon}, nil
 }
 
 // ProcessFile loads file data into our db
